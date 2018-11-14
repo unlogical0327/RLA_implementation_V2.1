@@ -29,7 +29,6 @@ if length(detected_ID)<3
     disp('detected reflectors smaller than 2....')
     reflector_rmse=99.99;
     Lidar_init_xy=[0 0];
-    rotation_trace=0;
 else
 %% 4. Match with referenced reflector table and find the current position of Robot.
 %thres_dist_match=2;
@@ -69,13 +68,11 @@ if match_result==0
     plot_reflector(Reflector_map,Reflector_ID,font_color)
     hold on;plot(Lidar_init_xy(1,1),Lidar_init_xy(1,2),'ok');hold on
     Lidar_trace=Lidar_init_xy;
-    rotation_trace=-angle(ret_R(1,1)+ret_R(2,1)*i)/pi*180;   % get rotation angle from R matrix
    %end
 elseif match_result==1
     disp('Bad data and wait for another scan data');
     reflector_rmse=99.99;
     Lidar_init_xy=[0 0];
-    rotation_trace=0;
 end
 
 end
@@ -92,4 +89,4 @@ else
 end
 Lidar_trace=[0 0];
 Lidar_trace=Lidar_init_xy;
-rotation_trace=-angle(ret_R(1,1)+ret_R(2,1)*i)/pi*180;
+

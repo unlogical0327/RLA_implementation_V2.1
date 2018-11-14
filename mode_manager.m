@@ -38,8 +38,8 @@ if scan_flag==0
     mode='cali';
     [Reflector_map, Reflector_ID, load_ref_map_status]=reflector_map_cali_scan(amp_thres,reflector_diameter,dist_delta,scan_data,data_source_flag,read_file);
     %%-- Only for test data
-    fname_3= ['Lidar_data_example3'];
-    Lidar_data = dlmread(fname_3, '\t', 3, 0)';
+    fname_2= ['Lidar_data_example2'];
+    Lidar_data = dlmread(fname_2, '\t', 3, 0)';
     size(Lidar_data)
     size(scan_data)
 elseif scan_flag==1 && moving_mode_simu==1
@@ -57,7 +57,7 @@ while(b==1)
     %% convert polar data to rectangle data
     [calibration_data,scan_data]=PolarToRect(Reflector_map,Lidar_data,data_source_flag);
     %%-- Run calibration mode
-    [cali_status,Lidar_trace] = calibration_mode(amp_thres,reflector_diameter,dist_delta,Reflector_map,Reflector_ID,calibration_data,scan_data,thres_dist_match,thres_dist_large,thres_angle_match);
+    [cali_status,Lidar_trace,rotation_trace] = calibration_mode(amp_thres,reflector_diameter,dist_delta,Reflector_map,Reflector_ID,calibration_data,scan_data,thres_dist_match,thres_dist_large,thres_angle_match);
     
     if cali_status==0
         disp('Calibration successful! Proceed to measurement mode....')
@@ -74,6 +74,7 @@ end
 %-- need to read the scan data and process the data at each scan
 %measurement
 Lidar_trace_p=0;
+rotation_trace_p=0;
 Lidar_update_Table_p=0;
 detected_ID_p=0;
 detected_reflector_p=0;
@@ -92,15 +93,16 @@ for ll=1:Loop_num     % simulation loop start from here!!!
         %% scan data is 2D data
         %% measurement_data only need angle and distance;
         % -- Could be replace by 2D scan data directly
-        size(Lidar_data)
+        size(Lidar_data);
         [measurement_data3,scan_data]=PolarToRect(Reflector_map,Lidar_data,data_source_flag);
         %%-- Plot raw data
         plot_Lidar_data(measurement_data3)
         %%-- Run measurement mode to find Robot location in the world coordinate
-        [mea_status,Lidar_trace,Lidar_update_Table,match_reflect_pool,match_reflect_ID,detected_reflector,detected_ID] = measurement_mode(num_ref_pool,num_detect_pool,Reflector_map,Reflector_ID,measurement_data3,scan_data,amp_thres,reflector_diameter,dist_delta,Lidar_trace,thres_dist_match,thres_dist_large,thres_angle_match);
+        [mea_status,Lidar_trace,rotation_trace,Lidar_update_Table,match_reflect_pool,match_reflect_ID,detected_reflector,detected_ID] = measurement_mode(num_ref_pool,num_detect_pool,Reflector_map,Reflector_ID,measurement_data3,scan_data,amp_thres,reflector_diameter,dist_delta,Lidar_trace,rotation_trace,thres_dist_match,thres_dist_large,thres_angle_match);
         %%
         if mea_status==3
             Lidar_trace=Lidar_trace_p;
+            rotation_trace=rotation_trace_p;
             Lidar_update_Table=Lidar_update_Table_p;
             detected_ID=detected_ID_p;
             detected_reflector=detected_reflector_p;
@@ -108,6 +110,7 @@ for ll=1:Loop_num     % simulation loop start from here!!!
             match_reflect_ID=match_reflect_ID_p;
         else
             Lidar_trace_p=Lidar_trace;
+            rotation_trace=rotation_trace_p;
             Lidar_update_Table_p=Lidar_update_Table;
             detected_ID_p=detected_ID;
             detected_reflector_p=detected_reflector;

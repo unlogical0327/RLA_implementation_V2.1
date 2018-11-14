@@ -1,7 +1,7 @@
 %% Measurement mode module
 % -- this is the measurement mode module used to conduct the continuing
 % measurement when Lidar starts to measure the location
-function [mea_status,Lidar_trace,Lidar_update_Table,match_reflect_pool,matched_reflect_ID,detected_reflector2,detected_ID2] = measurement_mode(num_ref_pool_orig,num_detect_pool,Reflector_map,Reflector_ID,measurement_data3,scan_data,amp_thres,reflector_diameter,dist_delta,Lidar_trace,thres_dist_match,thres_dist_large,thres_angle_match)
+function [mea_status,Lidar_trace,rotation_trace,Lidar_update_Table,match_reflect_pool,matched_reflect_ID,detected_reflector2,detected_ID2] = measurement_mode(num_ref_pool_orig,num_detect_pool,Reflector_map,Reflector_ID,measurement_data3,scan_data,amp_thres,reflector_diameter,dist_delta,Lidar_trace,rotation_trace,thres_dist_match,thres_dist_large,thres_angle_match)
 %% 1. Read the scan data, identify reflectors and define how many scanned reflectors are used from the list(nearest distance or most distingushed).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % identify the reflectors
@@ -9,8 +9,6 @@ function [mea_status,Lidar_trace,Lidar_update_Table,match_reflect_pool,matched_r
 measurement_data(:,1)=measurement_data3(:,1);
 measurement_data(:,2)=measurement_data3(:,2);
 [detected_ID,detected_reflector]=identify_reflector(amp_thres,reflector_diameter,dist_delta,measurement_data,scan_data);
-detected_ID
-1
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 num_ref_pool=num_ref_pool_orig;
 Lidar_x=0;
@@ -19,6 +17,7 @@ Lidar_y=0;
 %Lidar_init_xy(1,2)=Lidar_trace(1,2);
 %Lidar_init_xy=Lidar_trace(end,:);
 Lidar_current_xy=Lidar_trace(end,:);
+theta_rot=0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% For the case less than 3 reflectors detected.
 if length(detected_ID)<3
@@ -26,6 +25,7 @@ if length(detected_ID)<3
     %-- pass the null value to output
     reflector_rmse=99.99;
     Lidar_trace=[0 0];
+    rotation_trace=0;
     Lidar_update_Table=0;
     detected_ID2=0;
     detected_reflector2=0;
@@ -121,8 +121,9 @@ matched_detect_ID=matched_detect_ID2;    %matched_reflect_ID2 for angle match me
 if match_result == 0
     if length(matched_reflect_ID)==length(matched_detect_ID)
         [ret_R,ret_T,Lidar_update_xy]=locate_reflector_xy(match_reflect_pool,matched_reflect_ID,detected_reflector,matched_detect_ID,Lidar_x,Lidar_y);
-        %ret_R;
-        %ret_T;
+        theta_rot=-angle(ret_R(1,1)+ret_R(2,1)*i)/pi*180;  % find the rotation angle from Lidar 
+        ret_T;
+        ret_R;
         % Calculate reflector rmse errors
         [reflector_rmse]=reflector_rmse_error(ret_R,ret_T,match_reflect_pool,matched_reflect_ID,detected_reflector,matched_detect_ID);
         %% 2.d calculate updated map in the world map
@@ -138,10 +139,12 @@ if match_result == 0
         %% Update match reflector pool to get the latest nearest points from reflector map
         [match_reflect_pool,match_reflect_pool_ID] = create_match_ref_pool(num_ref_pool,Reflector_map,Lidar_current_xy);
         %% --Update Lidar trace
-        Lidar_trace=[Lidar_trace;Lidar_update_xy];
+        Lidar_trace=[Lidar_trace;Lidar_update_xy]
+        rotation_trace=[rotation_trace;theta_rot]
     else
         reflector_rmse=99.99;
         Lidar_trace=[0 0];
+        rotation_trace=0;
         Lidar_update_Table=0;
         detected_ID2=0;
         detected_reflector2=0;
@@ -154,6 +157,7 @@ elseif match_result == 1
     reflector_rmse=99.99;   % special value to mark the status
     %Lidar_update_xy=Lidar_trace(end,:);
     Lidar_trace=0;
+    rotation_trace=0;
     Lidar_update_Table=0;
     detected_ID2=0;
     detected_reflector2=0;
